@@ -125,6 +125,21 @@
         mode: "0600"
 
     # ------------------------------------------------------------------ #
+    # Pre-create gunicorn log files with correct ownership
+    # (gunicorn runs as {{ app_user }} which cannot create files in /var/log)
+    # ------------------------------------------------------------------ #
+    - name: Create gunicorn log files with correct ownership
+      file:
+        path: "{{ item }}"
+        state: touch
+        owner: "{{ app_user }}"
+        group: "{{ app_user }}"
+        mode: "0644"
+      loop:
+        - /var/log/gunicorn-access.log
+        - /var/log/gunicorn-error.log
+
+    # ------------------------------------------------------------------ #
     # Systemd service for Gunicorn
     # ------------------------------------------------------------------ #
     - name: Create gunicorn systemd service
@@ -226,7 +241,7 @@
 
     - name: Verify app health endpoint locally
       uri:
-        url: http://127.0.0.1:8000/health
+        url: http://127.0.0.1:8000/health/
         method: GET
         status_code: 200
         timeout: 10
